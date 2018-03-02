@@ -5,7 +5,8 @@ import "./AuctionInterface.sol";
 /** @title BadAuction */
 contract BadAuction is AuctionInterface {
 
-
+	//address highestBidder;
+	//uint256 highestBid;
 	/* Bid function, vulnerable to reentrency attack.
 	 * Must return true on successful send and/or bid,
 	 * bidder reassignment
@@ -14,15 +15,28 @@ contract BadAuction is AuctionInterface {
 	 */
 	function bid() payable external returns (bool) {
 		// YOUR CODE HERE
+		if(msg.value > highestBid){
+			if(highestBidder != address(0)){
+				if(!highestBidder.send(highestBid)){
+					msg.sender.send(msg.value);
+					return false;
+				}
+			}
+			highestBid = msg.value;
+			highestBidder = msg.sender;
+			return true;
+		} else {
+			msg.sender.call.value(msg.value)();
+			return false;
+		}
 	}
 
-
 	/* 	Reduce bid function. Vulnerable to attack.
-		Allows current highest bidder to reduce 
+		Allows current highest bidder to reduce
 		their bid by 1. Do NOT make changes here.
 		Instead notice the vulnerabilities, and
 		implement the function properly in GoodAuction.sol  */
-	
+
 	function reduceBid() external {
 	    if (highestBid >= 0) {
 	        highestBid = highestBid - 1;
@@ -42,6 +56,7 @@ contract BadAuction is AuctionInterface {
 
 	function () payable {
 		// YOUR CODE HERE
+		msg.sender.call.value(msg.value)();
 	}
 
 }
